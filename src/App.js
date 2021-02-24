@@ -3,12 +3,14 @@ import './App.css';
 import Login from './components/Login';
 import { getTokenFromUrl } from './spotify';
 import SpotifyWebApi from 'spotify-web-api-js';
+import Player from './components/Player';
+import { useDataLayerValue } from './context-api/DataLayer';
 
 const spotify = new SpotifyWebApi();
 
 function App() {
 
-  const [token, setToken] = useState(null);
+  const [{ user, token }, dispatch] = useDataLayerValue();
 
   //after being redirected from login page to localhost:3000, app.js is reloading
   //and is firing of this code to get the access token 
@@ -18,14 +20,20 @@ function App() {
     const _token = hash.access_token;
 
     if (_token) {
-      setToken(_token);
+      dispatch({
+        type: 'SET_TOKEN',
+        token: _token
+      })
 
       spotify.setAccessToken(_token);
 
       spotify.getMe()
       .then(user => {
-        console.log('😀', user);
-      })
+          dispatch({
+            type: 'SET_USER',
+            user: user
+          });
+      });
     }
   }, [])
 
@@ -34,8 +42,7 @@ function App() {
     <div className="app">
       {
         token ? (
-          //<Player />
-          <h1>I am logged in!</h1>
+          <Player spotify={spotify} />
         ) : (
           <Login />
         )
